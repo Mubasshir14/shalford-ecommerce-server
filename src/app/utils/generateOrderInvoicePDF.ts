@@ -122,7 +122,7 @@ export const generateOrderInvoicePDF = async (
       // ---------- Footer ----------
       doc.moveDown(3);
       doc.fontSize(9).text('Thank you for shopping!');
-      doc.fontSize(9).fillColor('#003366').text('- NextMert', { align: 'center' });
+      doc.fontSize(9).fillColor('#003366').text('- Shalford & Co.', { align: 'center' });
 
       // End document
       doc.end();

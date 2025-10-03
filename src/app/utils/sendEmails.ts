@@ -63,7 +63,7 @@ export const sendOrderUpdateEmail = async (payload: OrderEmailPayload) => {
           <a href="https://localhost:3000/user/dassboard/track-order">Order Tracking Page</a>.
         </p>
 
-        <p style="margin-top: 30px; color: #003366;"><strong>Thank you for shopping with NextMart!</strong></p>
+        <p style="margin-top: 30px; color: #003366;"><strong>Thank you for shopping with Shalford & Co.!</strong></p>
       </div>
     `;
 
