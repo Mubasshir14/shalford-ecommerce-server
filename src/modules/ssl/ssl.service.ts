@@ -24,7 +24,7 @@ const initPayment = async (paymentData: IPaymentData) => {
       success_url: `${config.sslCommerz.validation_api}?tran_id=${paymentData.transactionId}`,
       fail_url: config.sslCommerz.failed_url,
       cancel_url: config.sslCommerz.failed_url,
-      ipn_url: "http://localhost:3030/ipn",
+      ipn_url: "https://shalford-client.vercel.app/ipn",
       shipping_method: "N/A",
       product_name: "Appointment",
       product_category: "Service",

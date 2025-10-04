@@ -39,6 +39,8 @@ export interface IProduct {
   gender?: Gender;
   size?: Size[];
   color?: Color[];
+  minSell: number;
+  maxSell: number;
   price: number;
   delPrice: number;
   stock: number;

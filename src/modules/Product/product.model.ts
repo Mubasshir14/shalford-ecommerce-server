@@ -43,6 +43,8 @@ const productSchema = new Schema<IProduct>(
     price: { type: Number, required: true, min: 0 },
     delPrice: { type: Number, required: true, min: 0 },
     stock: { type: Number, required: true, min: 0 },
+    minSell: { type: Number, required: true, min: 0 },
+    maxSell: { type: Number, required: true, min: 0 },
     isFeatured: { type: Boolean, default: false },
     isOnSale: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },

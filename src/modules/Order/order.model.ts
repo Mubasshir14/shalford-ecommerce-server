@@ -65,6 +65,9 @@ const orderSchema = new Schema<IOrder>(
       type: String,
       required: true,
     },
+    specification: {
+      type: String,
+    },
     paymentMethod: {
       type: String,
       enum: ['COD', 'Online'],

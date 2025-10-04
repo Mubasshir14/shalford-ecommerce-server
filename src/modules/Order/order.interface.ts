@@ -20,6 +20,7 @@ export interface IOrder extends Document {
   district: string;
   upzilla: string;
   shippingAddress: string;
+  specification?: string;
   paymentMethod: 'Cash' | 'Card' | 'Online';
   paymentStatus: 'Pending' | 'Paid' | 'Failed';
   createdAt?: Date;

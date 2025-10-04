@@ -42,6 +42,8 @@ const productZodSchema = z.object({
       .number()
       .min(0, { message: 'Delivery price must be at least 0' }),
     stock: z.number().min(0, { message: 'Stock must be at least 0' }),
+    minSell: z.number().min(0, { message: 'Min Sell must be at least 0' }),
+    maxSell: z.number().min(0, { message: 'Max Sell must be at least 0' }),
     isFeatured: z.boolean().optional(),
     isOnSale: z.boolean().optional(),
     isActive: z.boolean().optional(),
