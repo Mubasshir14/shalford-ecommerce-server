@@ -45,6 +45,28 @@ const getFeaturedProduct: RequestHandler = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
+const getNotOnSaleProduct: RequestHandler = catchAsync(async (req, res) => {
+  const result = await ProductService.getNotOnSaleProduct();
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Product are retrieved successfully',
+    data: result,
+  });
+});
+const getNotFeaturedProduct: RequestHandler = catchAsync(async (req, res) => {
+  const result = await ProductService.getNotFeaturedProduct();
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Product are retrieved successfully',
+    data: result,
+  });
+});
+
 const getCategoryWisedProduct: RequestHandler = catchAsync(async (req, res) => {
   const result = await ProductService.getCategoryWisedProduct(req.params.id);
 
@@ -83,6 +105,36 @@ const updateProduct: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const OnSaleProductHandle: RequestHandler = catchAsync(async (req, res) => {
+  const {
+    body: { onsale },
+    params: { id },
+  } = req;
+  const result = await ProductService.OnSlaeProductHandle(id, onsale);
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Product is updated successfully',
+    data: result,
+  });
+});
+
+const OnFeaturedProductHandle: RequestHandler = catchAsync(async (req, res) => {
+  const {
+    body: { featured },
+    params: { id },
+  } = req;
+
+  const result = await ProductService.OnFeaturedProductHandle(id, featured);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Product is updated successfully',
+    data: result,
+  });
+});
+
 const deleteProduct: RequestHandler = catchAsync(async (req, res) => {
   const {
     params: { ProductId },
@@ -103,8 +155,12 @@ export const ProductController = {
   getAllProduct,
   getSingleProduct,
   updateProduct,
+  OnSaleProductHandle,
+  OnFeaturedProductHandle,
   deleteProduct,
   getCategoryWisedProduct,
   getFeaturedProduct,
   getOnSaleProduct,
+  getNotOnSaleProduct,
+  getNotFeaturedProduct,
 };

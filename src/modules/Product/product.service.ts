@@ -42,6 +42,20 @@ const getFeaturedProduct = async () => {
   return result;
 };
 
+const getNotOnSaleProduct = async () => {
+  const result = await Product.find({ isOnSale: false })
+    .sort({ createdAt: -1 })
+    .populate('category');
+  return result;
+};
+
+const getNotFeaturedProduct = async () => {
+  const result = await Product.find({ isFeatured: false })
+    .sort({ createdAt: -1 })
+    .populate('category');
+  return result;
+};
+
 const getCategoryWisedProduct = async (payload: string) => {
   const result = await Product.find({ category: payload })
     .sort({ createdAt: -1 })
@@ -77,6 +91,35 @@ const updateProduct = async (
   return await Product.findByIdAndUpdate(id, payload, { new: true });
 };
 
+const OnSlaeProductHandle = async (id: string, onsale: boolean) => {
+  const product = await Product.findOne({ _id: id });
+
+  if (!product) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Product Not Found');
+  }
+ 
+
+  return await Product.findByIdAndUpdate(
+    id,
+    { isOnSale: onsale },
+    { new: true },
+  );
+};
+
+const OnFeaturedProductHandle = async (
+  id: string,
+  featured: boolean
+) => {
+  console.log(featured);
+  const product = await Product.findOne({ _id: id });
+
+  if (!product) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Product Not Found');
+  }
+
+  return await Product.findByIdAndUpdate(id, {isFeatured: featured}, { new: true });
+};
+
 const deleteProduct = async (id: string) => {
   const product = await Product.findOne({ _id: id });
 
@@ -92,8 +135,12 @@ export const ProductService = {
   getAllProduct,
   getSingleProduct,
   updateProduct,
+  OnSlaeProductHandle,
+  OnFeaturedProductHandle,
   deleteProduct,
   getCategoryWisedProduct,
   getFeaturedProduct,
   getOnSaleProduct,
+  getNotFeaturedProduct,
+  getNotOnSaleProduct,
 };
