@@ -32,7 +32,7 @@ const sendEmail = async (
       });
 
       const mailOptions: any = {
-         from: '"Shalford & Co." <support@shalford&co.com>',
+         from: '"MUNJIA FASHION." <support@munjiafashion.com>',
          to: email,
          subject,
          html,

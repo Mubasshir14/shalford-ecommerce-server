@@ -73,7 +73,7 @@ export const sendOrderUpdateEmail = async (payload: OrderEmailPayload) => {
     
     <!-- Company Logo/Header -->
     <div style="text-align: center; padding-bottom: 20px; margin-bottom: 10px; border-bottom: 1px solid #FCD34D;">
-      <h1 style="color: #B45309; font-size: 28px; font-weight: 700; margin: 0; letter-spacing: 1px;">Shalford & Co.</h1>
+      <h1 style="color: #B45309; font-size: 28px; font-weight: 700; margin: 0; letter-spacing: 1px;">MUNJIA FASHION</h1>
       <p style="font-size: 12px; color: #92400E; margin-top: 5px;">Modern Essentials</p>
     </div>
 
@@ -120,7 +120,7 @@ export const sendOrderUpdateEmail = async (payload: OrderEmailPayload) => {
     <p style="margin-top: 25px; font-size: 16px; color: #444; text-align: center;">Use your Transaction ID to track your order.</p>
     <div style="text-align: center; margin-top: 15px;">
       <a 
-        href="https://shalford-client.vercel.app/user/dassboard/track-order"
+        href="https://shalford-client.vercel.app/track-order"
         style="display:inline-block; background-color:#FCD34D; color:#78350F; font-weight: 600; text-decoration:none; padding:15px 30px; border-radius:10px; font-size:16px; box-shadow: 0 4px 10px rgba(252, 211, 77, 0.5); transition: background-color 0.3s;"
       >
         🔎 Track Your Order
@@ -129,14 +129,14 @@ export const sendOrderUpdateEmail = async (payload: OrderEmailPayload) => {
 
     <!-- Footer / Thank you -->
     <p style="margin-top: 40px; font-size:14px; color:#92400E; text-align: center; border-top: 1px solid #FCD34D; padding-top: 20px;">
-      ✨ Thank you for shopping with <strong>Shalford & Co.</strong>! We appreciate your business.
+      ✨ Thank you for shopping with <strong>MUNJIA FASHION</strong>! We appreciate your business.
     </p>
   </div>
 </div>
 `;
 
     await transporter.sendMail({
-      from: `"Shalford & Co." <${config.from_email}>`,
+      from: `"MUNJIA FASHION" <${config.from_email}>`,
       to: email,
       subject: `Order Update: ${transactionId}`,
       html,
