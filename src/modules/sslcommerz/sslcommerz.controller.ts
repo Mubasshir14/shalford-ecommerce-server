@@ -9,7 +9,6 @@ const validatePaymentService = catchAsync(async (req: Request, res: Response) =>
     const result = await sslService.validatePaymentService(
         tran_id
     );
-    console.log(result)
 
     if (result) {
         res.redirect(301, config.sslCommerz.success_url as string);

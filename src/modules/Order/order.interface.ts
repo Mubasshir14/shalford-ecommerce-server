@@ -2,6 +2,7 @@ import { Types, Document } from 'mongoose';
 import { IPayment } from '../Payment/payment.interface';
 
 export interface IOrderProduct {
+  [x: string]: any;
   product: Types.ObjectId;
   quantity: number;
   unitPrice: number;

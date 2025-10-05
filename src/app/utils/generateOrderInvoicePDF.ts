@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // /* eslint-disable no-async-promise-executor */
 // /* eslint-disable @typescript-eslint/ban-ts-comment */
 // import PDFDocument from 'pdfkit';
@@ -26,7 +27,7 @@
 //         console.log('Using local logo from:', logoPath);
 //       } catch {
 //         // If local not found, fallback to remote URL
-//         const logoUrl = 'https://i.ibb.co.com/4Zbx7zjx/sk2.png'; 
+//         const logoUrl = 'https://i.ibb.co.com/4Zbx7zjx/sk2.png';
 //         console.log('Local logo not found, downloading from:', logoUrl);
 //         const response = await axios.get(logoUrl, { responseType: 'arraybuffer' });
 //         logoBuffer = Buffer.from(response.data);
@@ -132,7 +133,6 @@
 //   });
 // };
 
-
 /* eslint-disable no-async-promise-executor */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import PDFDocument from 'pdfkit';
@@ -140,268 +140,320 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { IOrder } from '../../modules/Order/order.interface';
+import Product from '../../modules/Product/product.model';
 
 /**
- * Generates a modern, professional PDF invoice for an order.
+ * Generates a visually appealing PDF invoice for an order with an Amber theme.
  * @param {IOrder} order - The order object to generate the invoice for.
+ * @param {any} tran_id - The transaction ID associated with the order.
  * @returns {Promise<Buffer>} - The generated PDF as a Buffer.
  */
 export const generateOrderInvoicePDF = async (
   order: IOrder,
+  tran_id: any,
 ): Promise<Buffer> => {
+  console.log(order);
   return new Promise<Buffer>(async (resolve, reject) => {
+    console.log(order);
+
+    const productIds = order.product.map((p: any) => p.product);
+
+    const productsFromDB = await Product.find({
+      _id: { $in: productIds },
+    }).select('name price');
+
+    const productMap = productsFromDB.reduce((acc: any, p: any) => {
+      acc[p._id.toString()] = p;
+      return acc;
+    }, {});
     try {
-      // ✅ Local logo path
+      // --- Style Constants for Amber Theme (Inspired by Sansita's warmth) ---
+      const ACCENT_COLOR = '#CD853F'; // Peru - Rich Gold/Amber for headers
+      const PRIMARY_TEXT_COLOR = '#333333'; // Deep charcoal for main text
+      const SECONDARY_TEXT_COLOR = '#666666'; // Muted grey for details
+      const LINE_COLOR = '#E0E0E0'; // Light grey for subtle lines
+      const FONT_NORMAL = 'Helvetica';
+      const FONT_BOLD = 'Helvetica-Bold';
+      const TABLE_ROW_HEIGHT = 25;
+
+      // --- Logo Loading Logic ---
       const logoPath = path.join(process.cwd(), '/src/assets/company.png');
       let logoBuffer: Buffer;
 
       try {
-        // First try local logo
         logoBuffer = fs.readFileSync(logoPath);
         console.log('Using local logo from:', logoPath);
       } catch {
-        // If local not found, fallback to remote URL
-        const logoUrl = 'https://i.ibb.co.com/4Zbx7zjx/sk2.png'; 
+        const logoUrl = 'https://i.ibb.co.com/4Zbx7zjx/sk2.png';
         console.log('Local logo not found, downloading from:', logoUrl);
-        const response = await axios.get(logoUrl, { responseType: 'arraybuffer' });
+        const response = await axios.get(logoUrl, {
+          responseType: 'arraybuffer',
+        });
         logoBuffer = Buffer.from(response.data);
       }
 
-      // Start PDF doc with better margins
-      const doc = new PDFDocument({ 
-        margin: 50,
-        size: 'A4',
-        bufferPages: true
-      });
+      // --- PDF Document Setup ---
+      const doc = new PDFDocument({ margin: 50 });
       const buffers: Buffer[] = [];
+
       //@ts-ignore
       doc.on('data', (chunk) => buffers.push(chunk));
       doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', (err: Error) => reject(err));
 
-      // ---------- Modern Header with Brand Colors ----------
-      // Top colored bar
-      doc.rect(0, 0, doc.page.width, 120)
-         .fill('#FF8C00'); // Orange/Amber gradient effect
-      
-      // Logo
-      const logoWidth = 80;
+      // --------------------------------------------------------------------------------
+      // ---------- Header (Logo & Company Info) ----------------------------------------
+      // --------------------------------------------------------------------------------
+
+      const logoWidth = 70;
       const logoX = 50;
-      doc.image(logoBuffer, logoX, 30, { width: logoWidth });
+      // Place logo on the left
+      doc.image(logoBuffer, logoX, doc.y, { width: logoWidth });
 
-      // Company Info (Right Side)
-      doc.fontSize(22)
-         .font('Helvetica-Bold')
-         .fillColor('#FFFFFF')
-         .text('MUNJIA FASHION', 200, 35, { align: 'right' });
-      
-      doc.fontSize(9)
-         .font('Helvetica')
-         .fillColor('#FFFFFF')
-         .text('Level-4, 34, Awal Centre, Banani, Dhaka', 200, 65, { align: 'right' })
-         .text('Email: munjiafashion@gmail.com', 200, 80, { align: 'right' })
-         .text('Phone: +880 1234 567 890', 200, 95, { align: 'right' });
+      const headerY = doc.y - 45; // Calculate position to align text with the top of the logo
 
-      doc.moveDown(3);
-
-      // ---------- Invoice Title Section ----------
-      doc.rect(50, 140, doc.page.width - 100, 60)
-         .fillAndStroke('#F5F5F5', '#E0E0E0');
-
-      doc.fontSize(24)
-         .font('Helvetica-Bold')
-         .fillColor('#FF8C00')
-         .text('INVOICE', 70, 155);
-
-      doc.fontSize(10)
-         .font('Helvetica')
-         .fillColor('#666666')
-         .text(`Invoice #: INV-${order._id?.toString().slice(-8).toUpperCase() || 'N/A'}`, 70, 180);
-
-      // Date on right side
-      doc.fontSize(10)
-         .fillColor('#666666')
-         .text(`Date: ${(order.createdAt as Date).toLocaleDateString('en-US', { 
-           year: 'numeric', 
-           month: 'long', 
-           day: 'numeric' 
-         })}`, 350, 155, { align: 'right' });
-
-      doc.text(`Payment Status: ${order.paymentStatus}`, 350, 175, { align: 'right' });
-
-      doc.moveDown(2);
-
-      // ---------- Customer & Shipping Info ----------
-      const infoBoxY = 220;
-      
-      // Bill To Box
-      doc.rect(50, infoBoxY, 240, 80)
-         .fillAndStroke('#FFFFFF', '#E0E0E0');
-
-      doc.fontSize(11)
-         .font('Helvetica-Bold')
-         .fillColor('#FF8C00')
-         .text('BILL TO:', 60, infoBoxY + 10);
-
-      doc.fontSize(10)
-         .font('Helvetica')
-         .fillColor('#000000')
-         //@ts-ignore
-         .text(order.user?.name || 'N/A', 60, infoBoxY + 30, { width: 220 })
-         .text(order.shippingAddress || 'N/A', 60, infoBoxY + 45, { width: 220 });
-
-      // Payment Details Box
-      doc.rect(305, infoBoxY, 240, 80)
-         .fillAndStroke('#FFFFFF', '#E0E0E0');
-
-      doc.fontSize(11)
-         .font('Helvetica-Bold')
-         .fillColor('#FF8C00')
-         .text('PAYMENT DETAILS:', 315, infoBoxY + 10);
-
-      doc.fontSize(10)
-         .font('Helvetica')
-         .fillColor('#000000')
-         .text(`Method: ${order.paymentMethod}`, 315, infoBoxY + 30)
-         .text(`Status: ${order.paymentStatus}`, 315, infoBoxY + 50);
-
-      doc.moveDown(3);
-
-      // ---------- Products Table ----------
-      const tableTop = 320;
-      const tableHeight = 25;
-
-      // Table Header with colored background
-      doc.rect(50, tableTop, doc.page.width - 100, tableHeight)
-         .fill('#FF8C00');
-
-      doc.fontSize(11)
-         .font('Helvetica-Bold')
-         .fillColor('#FFFFFF')
-         .text('PRODUCT NAME', 60, tableTop + 8, { width: 200 })
-         .text('QTY', 280, tableTop + 8, { width: 60, align: 'center' })
-         .text('UNIT PRICE', 360, tableTop + 8, { width: 80, align: 'right' })
-         .text('TOTAL', 460, tableTop + 8, { width: 80, align: 'right' });
-
-      let currentY = tableTop + tableHeight + 10;
-      let rowColor = true;
-
-      order.product.forEach((item) => {
-        //@ts-ignore
-        const productName = item.oder?.product?.name || 'Product';
-        const quantity = item.quantity;
-        //@ts-ignore
-        const unitPrice = item.unitPrice || 0;
-        const total = unitPrice * quantity;
-
-        // Alternate row colors
-        if (rowColor) {
-          doc.rect(50, currentY - 5, doc.page.width - 100, tableHeight)
-             .fill('#F9F9F9');
-        }
-        rowColor = !rowColor;
-
-        doc.fontSize(10)
-           .font('Helvetica')
-           .fillColor('#000000')
-           .text(productName, 60, currentY, { width: 200, ellipsis: true })
-           .text(quantity.toString(), 280, currentY, { width: 60, align: 'center' })
-           .text(`৳ ${unitPrice.toFixed(2)}`, 360, currentY, { width: 80, align: 'right' })
-           .text(`৳ ${total.toFixed(2)}`, 460, currentY, { width: 80, align: 'right' });
-
-        currentY += tableHeight;
+      // Company Info aligned right
+      doc
+        .fillColor(ACCENT_COLOR)
+        .font(FONT_BOLD)
+        .fontSize(24)
+        .text('MUNJIA FASHION', 50, headerY, { align: 'right' });
+      doc.moveDown(0.2);
+      doc
+        .fillColor(SECONDARY_TEXT_COLOR)
+        .font(FONT_NORMAL)
+        .fontSize(10)
+        .text('Level-4, 34, Awal Centre, Banani, Dhaka', { align: 'right' });
+      doc.text('Email: munjiafashion@gmail.com | Phone: + 06 223 456 678', {
+        align: 'right',
       });
 
-      // Table bottom border
-      doc.moveTo(50, currentY)
-         .lineTo(doc.page.width - 50, currentY)
-         .strokeColor('#E0E0E0')
-         .stroke();
+      doc.moveDown(2.5);
 
-      // ---------- Pricing Summary ----------
-      currentY += 30;
+      // Invoice Title Banner
+      doc.fillColor(ACCENT_COLOR).rect(50, doc.y, 500, 30).fill();
+      doc
+        .fillColor('#FFFFFF')
+        .font(FONT_BOLD)
+        .fontSize(18)
+        .text('INVOICE', 50, doc.y + 7, { align: 'center' });
+      doc.moveDown(2);
+
+      // --------------------------------------------------------------------------------
+      // ---------- Invoice and Customer Details (Two Columns) --------------------------
+      // --------------------------------------------------------------------------------
+
+      const detailY = doc.y;
+
+      // Left Column: Invoice Details
+      doc
+        .fillColor(PRIMARY_TEXT_COLOR)
+        .font(FONT_BOLD)
+        .fontSize(11)
+        .text('INVOICE DETAILS', 50, detailY);
+      doc
+        .font(FONT_NORMAL)
+        .fontSize(10)
+        .text(`ID: ${order._id}`, 50, detailY + 15)
+        .text(`Transaction ID: ${tran_id}`, 50, detailY + 30) // New: Added Transaction ID
+        .text(
+          `Date: ${(order.createdAt as Date).toLocaleDateString()}`,
+          50,
+          detailY + 45,
+        ); // Adjusted offset
+      doc.moveDown(1);
+      doc.font(FONT_BOLD).text('Payment Status:', 50, detailY + 60); // Adjusted offset
+      doc.font(FONT_NORMAL).text(`${'Paid'}`, 50, detailY + 75); // Adjusted offset
+
+      // Right Column: Customer/Shipping
+      doc
+        .fillColor(PRIMARY_TEXT_COLOR)
+        .font(FONT_BOLD)
+        .fontSize(11)
+        .text('SHIPPING TO', 300, detailY);
+      doc.font(FONT_NORMAL).fontSize(10);
+      // @ts-ignore
+      doc.text(order.user.name, 300, detailY + 15);
+      doc.text(order.shippingAddress, 300, detailY + 30, { width: 250 });
+
+      doc.moveDown(5); // Move down past the details block
+
+      // --------------------------------------------------------------------------------
+      // ---------- Products Table ------------------------------------------------------
+      // --------------------------------------------------------------------------------
+
+      const tableTop = doc.y;
+      const columnPositions = [50, 320, 420, 500]; // StartX, QuantityX, UnitPriceX, TotalX
+
+      // Table Header Background (Soft Accent)
+      doc.fillColor('#F5F5F5').rect(50, tableTop, 500, TABLE_ROW_HEIGHT).fill();
+
+      // Table Header Text
+      doc.fillColor(ACCENT_COLOR).font(FONT_BOLD).fontSize(12);
+      doc.text('Product Name', columnPositions[0], tableTop + 7, {
+        width: 250,
+      });
+      doc.text('Qty', columnPositions[1], tableTop + 7, { align: 'center' });
+      doc.text('Unit Price', columnPositions[2], tableTop + 7, {
+        align: 'center',
+      });
+      doc.text('Total', columnPositions[3], tableTop + 7, { align: 'right' });
+
+      let currentY = tableTop + TABLE_ROW_HEIGHT;
+
+      doc.font(FONT_NORMAL).fontSize(10).fillColor(PRIMARY_TEXT_COLOR);
+
+      // order.product.forEach((item, index) => {
+      //   // Subtle row striping for better readability
+      //   if (index % 2 === 1) {
+      //     doc
+      //       .fillColor('#FAFAFA')
+      //       .rect(50, currentY, 500, TABLE_ROW_HEIGHT)
+      //       .fill();
+      //   }
+
+      //   // --- Product Name Extraction ---
+      //   // Assuming the product name is deeply nested or directly available on the item
+      //   // @ts-ignore
+      //   const productName =
+      //     item.oder?.product?.name || 'Product ' + (index + 1); // Uses product name from order item
+      //   const quantity = item.quantity;
+      //   // @ts-ignore
+      //   const unitPrice = item.unitPrice || 0;
+      //   const price = unitPrice * quantity;
+
+      //   doc
+      //     .fillColor(PRIMARY_TEXT_COLOR)
+      //     .font(FONT_NORMAL)
+      //     .text(productName, columnPositions[0], currentY + 7, { width: 250 });
+      //   doc.text(quantity.toString(), columnPositions[1], currentY + 7, {
+      //     align: 'center',
+      //   });
+      //   doc.text(unitPrice.toFixed(2), columnPositions[2], currentY + 7, {
+      //     align: 'center',
+      //   });
+      //   doc
+      //     .font(FONT_BOLD)
+      //     .text(price.toFixed(2), columnPositions[3], currentY + 7, {
+      //       align: 'right',
+      //     });
+
+      //   currentY += TABLE_ROW_HEIGHT;
+      // });
+
+      // Draw bottom line for the table
+
+      order.product.forEach((item: any, index: number) => {
+        if (index % 2 === 1) {
+          doc
+            .fillColor('#FAFAFA')
+            .rect(50, currentY, 500, TABLE_ROW_HEIGHT)
+            .fill();
+        }
+
+        const productData = productMap[item.product.toString()];
+        const productName = productData?.name || `Product ${index + 1}`;
+        const unitPrice = item.unitPrice || productData?.price || 0;
+        const quantity = item.quantity || 1;
+        const price = unitPrice * quantity;
+
+        doc
+          .fillColor(PRIMARY_TEXT_COLOR)
+          .font(FONT_NORMAL)
+          .text(productName, columnPositions[0], currentY + 7, { width: 250 });
+        doc.text(quantity.toString(), columnPositions[1], currentY + 7, {
+          align: 'center',
+        });
+        doc.text(unitPrice.toFixed(2), columnPositions[2], currentY + 7, {
+          align: 'center',
+        });
+        doc
+          .font(FONT_BOLD)
+          .text(price.toFixed(2), columnPositions[3], currentY + 7, {
+            align: 'right',
+          });
+
+        currentY += TABLE_ROW_HEIGHT;
+      });
+
+      doc
+        .lineWidth(1.5)
+        .moveTo(50, currentY)
+        .lineTo(550, currentY)
+        .stroke(ACCENT_COLOR);
+
+      // --------------------------------------------------------------------------------
+      // ---------- Summary & Total Box -------------------------------------------------
+      // --------------------------------------------------------------------------------
+
+      doc.moveDown(1.5);
+
       const summaryX = 350;
-      const summaryWidth = 190;
+      const summaryWidth = 200;
+      let summaryY = doc.y;
 
-      // Summary box
-      doc.rect(summaryX, currentY, summaryWidth, 100)
-         .fillAndStroke('#F5F5F5', '#E0E0E0');
+      // Subtotal and Charges
+      doc.font(FONT_NORMAL).fontSize(11).fillColor(PRIMARY_TEXT_COLOR);
+      doc.text('Sub Total:', summaryX, summaryY, { width: 100, align: 'left' });
+      doc.text(`${order.totalAmount.toFixed(2)} /-`, summaryX + 100, summaryY, {
+        width: 90,
+        align: 'right',
+      });
+      summaryY += 18;
 
-      currentY += 15;
+      doc.text('Delivery Charge:', summaryX, summaryY, {
+        width: 100,
+        align: 'left',
+      });
+      doc.text(
+        `${order.deliveryCharge.toFixed(2)} /-`,
+        summaryX + 100,
+        summaryY,
+        { width: 90, align: 'right' },
+      );
+      summaryY += 25;
 
-      // Subtotal
-      doc.fontSize(10)
-         .font('Helvetica')
-         .fillColor('#000000')
-         .text('Subtotal:', summaryX + 15, currentY)
-         .text(`৳ ${order.totalAmount.toFixed(2)}`, summaryX + 15, currentY, { 
-           width: summaryWidth - 30, 
-           align: 'right' 
-         });
+      // Final Total Box (Accent Color)
+      const finalTotal = order.totalAmount + order.deliveryCharge;
+      doc
+        .fillColor(ACCENT_COLOR)
+        .rect(summaryX, summaryY, summaryWidth, 30)
+        .fill();
 
-      currentY += 20;
+      doc.fillColor('#FFFFFF').font(FONT_BOLD).fontSize(14);
+      doc.text('GRAND TOTAL:', summaryX + 10, summaryY + 8);
+      doc.text(`${finalTotal.toFixed(2)} /-`, summaryX + 90, summaryY + 8, {
+        width: 100,
+        align: 'right',
+      });
 
-      // Delivery Charge
-      doc.text('Delivery Charge:', summaryX + 15, currentY)
-         .text(`৳ ${order.deliveryCharge.toFixed(2)}`, summaryX + 15, currentY, { 
-           width: summaryWidth - 30, 
-           align: 'right' 
-         });
+      // --------------------------------------------------------------------------------
+      // ---------- Footer --------------------------------------------------------------
+      // --------------------------------------------------------------------------------
 
-      currentY += 25;
+      doc.moveDown(6);
+      doc
+        .lineWidth(0.5)
+        .moveTo(50, doc.y)
+        .lineTo(550, doc.y)
+        .stroke(LINE_COLOR);
+      doc.moveDown(0.5);
 
-      // Divider
-      doc.moveTo(summaryX + 15, currentY)
-         .lineTo(summaryX + summaryWidth - 15, currentY)
-         .strokeColor('#000000')
-         .lineWidth(1)
-         .stroke();
-
-      currentY += 10;
-
-      // Grand Total
-      const grandTotal = order.totalAmount + order.deliveryCharge;
-      
-      doc.fontSize(12)
-         .font('Helvetica-Bold')
-         .fillColor('#FF8C00')
-         .text('TOTAL AMOUNT:', summaryX + 15, currentY)
-         .text(`৳ ${grandTotal.toFixed(2)}`, summaryX + 15, currentY, { 
-           width: summaryWidth - 30, 
-           align: 'right' 
-         });
-
-      // ---------- Footer ----------
-      const footerY = doc.page.height - 100;
-      
-      // Divider line
-      doc.moveTo(50, footerY)
-         .lineTo(doc.page.width - 50, footerY)
-         .strokeColor('#E0E0E0')
-         .stroke();
-
-      // Thank you message
-      doc.fontSize(11)
-         .font('Helvetica-Bold')
-         .fillColor('#FF8C00')
-         .text('Thank you for shopping with us!', 50, footerY + 15, { 
-           align: 'center' 
-         });
-
-      doc.fontSize(9)
-         .font('Helvetica')
-         .fillColor('#666666')
-         .text('For any queries, please contact us at munjiafashion@gmail.com or +880 1234 567 890', 
-           50, footerY + 35, { 
-             align: 'center',
-             width: doc.page.width - 100
-           });
-
-      // Company name at bottom
-      doc.fontSize(10)
-         .font('Helvetica-Bold')
-         .fillColor('#000000')
-         .text('MUNJIA FASHION', 50, footerY + 60, { align: 'center' });
+      doc
+        .fontSize(10)
+        .fillColor(SECONDARY_TEXT_COLOR)
+        .font(FONT_NORMAL)
+        .text('Thank you for shopping! We appreciate your business.', {
+          align: 'center',
+        });
+      doc.moveDown(0.2);
+      doc
+        .fontSize(10)
+        .fillColor(ACCENT_COLOR)
+        .font(FONT_BOLD)
+        .text('Invoice generated by MUNJIA FASHION - www.munjiafashion.com', {
+          align: 'center',
+        });
 
       // End document
       doc.end();

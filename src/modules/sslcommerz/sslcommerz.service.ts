@@ -187,6 +187,7 @@ import { generateOrderInvoicePDF } from '../../app/utils/generateOrderInvoicePDF
 import { Payment } from '../Payment/payment.model';
 import { Order } from '../Order/order.model';
 import Cart from '../Cart/cart.model';
+import Product from '../Product/product.model';
 
 const app = express();
 
@@ -269,7 +270,7 @@ const validatePaymentService = async (tran_id: string): Promise<boolean> => {
       tran_id,
     });
 
-    console.log(validationResponse.element);
+    // console.log(validationResponse.element);
 
     if (
       !validationResponse.element ||
@@ -328,14 +329,31 @@ const validatePaymentService = async (tran_id: string): Promise<boolean> => {
       await Cart.deleteMany({ user: updatedOrder.user._id }).session(session);
     }
 
+    // Decrease Stock
+    if (data.status === 'Paid') {
+      const products = Array.isArray(updatedOrder.product)
+        ? updatedOrder.product
+        : [updatedOrder.product];
+
+      for (const item of products) {
+        const productId = item.product ? item.product : item;
+        const quantity = item.quantity || 1;
+
+        await Product.findByIdAndUpdate(
+          productId,
+          { $inc: { stock: -quantity } },
+          { session },
+        );
+      }
+    }
+
     // Commit transaction before sending email
     await session.commitTransaction();
     console.log('Transaction committed successfully');
-
     // Send email after transaction is committed
     try {
       console.log('Sending email...');
-      const pdfBuffer = await generateOrderInvoicePDF(updatedOrder);
+      const pdfBuffer = await generateOrderInvoicePDF(updatedOrder, tran_id);
       const emailContent = await EmailHelper.createEmailContent(
         //@ts-ignore
         { userName: updatedOrder.user.name || '' },
