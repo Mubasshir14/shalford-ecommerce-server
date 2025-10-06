@@ -86,7 +86,7 @@ export const sendOrderUpdateEmail = async (payload: OrderEmailPayload) => {
   <p style="font-size: 18px; color: #065F46; font-weight: 700; margin: 0;">
     📦 Current Status: 
     <span style="color: #059669;">
-      ${status === 'completed' ? 'Delivered' : status}
+      ${status === 'Completed' ? 'Delivered' : status}
     </span>
   </p>
 </div>
